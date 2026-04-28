@@ -3,17 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>Караоке плеер — плавная подсветка</title>
+    <title>Караоке плеер — плавная подсветка (центр с первой и последней строки)</title>
     <style>
-        /* Подключение шрифтов Montserrat с разной насыщенностью */
-@font-face {
-    font-family: 'Montserrat';
-    src: url('Montserrat-VariableFont_wght.ttf') format('truetype');
-    font-weight: 100 900; /* диапазон */
-    font-style: normal;
-    font-display: swap;
-}
-        
+        @font-face {
+            font-family: 'Montserrat';
+            src: url('Montserrat-VariableFont_wght.ttf') format('truetype');
+            font-weight: 100 900;
+            font-style: normal;
+            font-display: swap;
+        }
+
         * {
             margin: 0;
             padding: 0;
@@ -36,7 +35,6 @@
             margin: 0 auto;
         }
 
-        /* Компактная панель загрузки - уменьшенная и выше */
         .upload-panel {
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(4px);
@@ -112,7 +110,6 @@
             transform: scale(0.96);
         }
 
-        /* Плеер - компактный, выше */
         .player-wrapper {
             background: white;
             border-radius: 28px;
@@ -149,7 +146,6 @@
             font-weight: normal;
         }
 
-        /* Окно с текстом - БОЛЬШЕ! */
         .lyrics-wrapper {
             background: white;
             border-radius: 32px;
@@ -167,57 +163,56 @@
             flex: 1;
             overflow-y: auto;
             text-align: center;
-            scroll-behavior: auto; /* Отключаем встроенную плавность, будем управлять сами */
-            scroll-padding-block: 45%;
-            padding: 16px 8px;
-            /* Скрываем скроллбар полностью */
-            scrollbar-width: none; /* Firefox */
-            -ms-overflow-style: none; /* IE/Edge */
+            scroll-behavior: auto;
+            scroll-padding-block: 0;
+            padding: 0 8px;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
         }
 
-        /* Скрываем скроллбар для Chrome/Safari/Opera */
         .lyrics-display::-webkit-scrollbar {
             display: none;
             width: 0;
             background: transparent;
         }
 
-        /* Стили для строк текста - используем один шрифт Montserrat */
-.lyric-line {
-    font-family: 'Montserrat', sans-serif;
+        /* Разделители для начального и конечного центрирования */
+        .lyrics-top-spacer,
+        .lyrics-bottom-spacer {
+            width: 100%;
+            transition: height 0.2s ease;
+            pointer-events: none;
+        }
 
-    font-weight: 500; /* старт чуть легче */
-    font-size: 26px;
-    line-height: 1.5;
-    color: #8b8c9e;
-    margin: 14px auto;
-
-    transition:
-        font-weight 0.45s cubic-bezier(0.4, 0, 0.2, 1),
-        font-size 0.45s cubic-bezier(0.4, 0, 0.2, 1),
-        transform 0.45s cubic-bezier(0.4, 0, 0.2, 1),
-        color 0.45s cubic-bezier(0.4, 0, 0.2, 1),
-        opacity 0.45s cubic-bezier(0.4, 0, 0.2, 1);
-
-    transform: scale(1);
-    opacity: 0.7;
-}
+        .lyric-line {
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 500;
+            font-size: 26px;
+            line-height: 1.5;
+            color: #8b8c9e;
+            margin: 14px auto;
+            transition:
+                font-weight 0.45s cubic-bezier(0.4, 0, 0.2, 1),
+                font-size 0.45s cubic-bezier(0.4, 0, 0.2, 1),
+                transform 0.45s cubic-bezier(0.4, 0, 0.2, 1),
+                color 0.45s cubic-bezier(0.4, 0, 0.2, 1),
+                opacity 0.45s cubic-bezier(0.4, 0, 0.2, 1);
+            transform: scale(1);
+            opacity: 0.7;
+        }
 
         .lyric-line:hover {
             background: transparent;
         }
 
-        /* Активная строка - увеличиваем размер и жирность */
-.lyric-line.active {
-    font-weight: 800; /* плавно утолщается */
-    font-size: 32px;
-    color: #000;
+        .lyric-line.active {
+            font-weight: 800;
+            font-size: 32px;
+            color: #000;
+            transform: scale(1.03);
+            opacity: 1;
+        }
 
-    transform: scale(1.03);
-    opacity: 1;
-}
-
-        /* Статус (только системные ошибки, не уведомления о перемотке) */
         .status {
             margin-top: 16px;
             padding: 10px;
@@ -286,7 +281,6 @@
 </head>
 <body>
 <div class="karaoke-container">
-    <!-- Компактная панель загрузки - выше и меньше -->
     <div class="upload-panel" id="uploadPanel">
         <div class="upload-grid">
             <div class="upload-item">
@@ -306,7 +300,6 @@
         </div>
     </div>
 
-    <!-- Компактный плеер -->
     <div class="player-wrapper">
         <h2>🎤 Караоке <span id="trackNameDisplay" class="song-title">—</span></h2>
         <audio id="audio" controls preload="auto">
@@ -315,7 +308,6 @@
         </audio>
     </div>
 
-    <!-- Большое окно текста -->
     <div class="lyrics-wrapper">
         <div class="lyrics-display" id="lyrics">
             <div class="empty-state">
@@ -340,15 +332,14 @@
             this.lyricsFileNameSpan = document.getElementById('lyricsFileName');
             this.trackNameDisplay = document.getElementById('trackNameDisplay');
 
-            this.lyrics = [];           // [{ time, text }]
+            this.lyrics = [];
             this.currentLineIndex = -1;
             this.currentAudioUrl = null;
-            this.transitionTimer = null;
-            this.isSeekingViaClick = false;
             this.updateRaf = null;
-            this.scrollRaf = null;
             this.activeScrollAnimation = null;
-            this.isTransitioning = false; // Флаг для предотвращения конфликтов анимаций
+            this.resizeObserver = null;
+            this.topSpacer = null;
+            this.bottomSpacer = null;
 
             this.initEventListeners();
         }
@@ -366,30 +357,27 @@
                 this.loadLyricsFile(file);
             });
 
-            this.resetBtn.addEventListener('click', () => {
-                this.resetAll();
-            });
+            this.resetBtn.addEventListener('click', () => this.resetAll());
 
-            // Синхронизация с плавным обновлением активной строки
             this.audio.addEventListener('timeupdate', () => this.scheduleDisplayUpdate());
-            this.audio.addEventListener('seeked', () => {
-                this.scheduleDisplayUpdate();
-            });
+            this.audio.addEventListener('seeked', () => this.scheduleDisplayUpdate());
             this.audio.addEventListener('play', () => this.scheduleDisplayUpdate());
 
-            // Клик по строке для перемотки
             this.lyricsContainer.addEventListener('click', (e) => {
                 const lineDiv = e.target.closest('.lyric-line');
                 if (lineDiv && lineDiv.dataset.index !== undefined) {
                     const idx = parseInt(lineDiv.dataset.index, 10);
                     if (this.lyrics[idx] && !isNaN(this.lyrics[idx].time)) {
-                        this.isSeekingViaClick = true;
                         this.audio.currentTime = this.lyrics[idx].time;
                         this.scheduleDisplayUpdate();
-                        setTimeout(() => { this.isSeekingViaClick = false; }, 300);
                     }
                 }
             });
+
+            this.resizeObserver = new ResizeObserver(() => {
+                this.updateSpacerHeight();
+            });
+            this.resizeObserver.observe(this.lyricsContainer);
         }
 
         loadAudioFile(file) {
@@ -404,7 +392,7 @@
             let displayName = file.name.length > 32 ? file.name.slice(0, 28) + '...' : file.name;
             this.audioFileNameSpan.innerHTML = `✅ ${displayName}`;
             this.trackNameDisplay.innerText = file.name.replace(/\.[^/.]+$/, "").slice(0, 30);
-            this.showStatusMessage(`🎵 Аудио "${file.name}" загружено`, 'success', 1800);
+            // Уведомления убраны
             this.scheduleDisplayUpdate();
         }
 
@@ -417,23 +405,22 @@
                 const isLrcLike = /\[\d{2}:\d{2}(\.\d{2,3})?\]/.test(text) || file.name.toLowerCase().endsWith('.lrc');
                 if (isLrcLike) {
                     this.parseLRC(text);
-                    this.showStatusMessage(`📖 Загружен LRC (${this.lyrics.length} строк)`, 'success', 1800);
                 } else {
                     this.convertTxtToLrcStyle(text);
-                    this.showStatusMessage(`🔄 TXT конвертирован в караоке (${this.lyrics.length} строк)`, 'success', 2200);
                 }
 
                 if (this.lyrics.length === 0) {
                     this.lyricsContainer.innerHTML = `<div class="empty-state">⚠️ В файле нет строк текста. Загрузите корректный TXT/LRC.</div>`;
-                    this.showStatusMessage('❌ Не найдено текстовых строк', 'error', 2000);
                     return;
                 }
 
                 this.renderLyrics();
-                this.scheduleDisplayUpdate();
+                requestAnimationFrame(() => {
+                    this.updateSpacerHeight();
+                    this.scheduleDisplayUpdate();
+                });
             } catch (err) {
                 console.error(err);
-                this.showStatusMessage(`Ошибка чтения файла: ${err.message}`, 'error', 3000);
                 this.lyricsFileNameSpan.innerHTML = `❌ Ошибка`;
                 this.lyricsContainer.innerHTML = `<div class="empty-state">🚫 Не удалось обработать файл</div>`;
             }
@@ -450,7 +437,8 @@
                 return;
             }
 
-            let duration = this.audio.duration && isFinite(this.audio.duration) && this.audio.duration > 0 ? this.audio.duration : null;
+            let duration = this.audio.duration && isFinite(this.audio.duration) && this.audio.duration > 0
+                ? this.audio.duration : null;
             const newLyrics = [];
 
             if (duration && duration > 0 && textLines.length > 0) {
@@ -487,9 +475,7 @@
                         else if (match[3].length === 3) timeSeconds += centi / 1000;
                     }
                     const text = line.replace(timeRegex, '').trim();
-                    if (text) {
-                        parsed.push({ time: timeSeconds, text });
-                    }
+                    if (text) parsed.push({ time: timeSeconds, text });
                 }
             }
 
@@ -517,14 +503,48 @@
         renderLyrics() {
             if (!this.lyrics.length) {
                 this.lyricsContainer.innerHTML = `<div class="empty-state">📭 Нет текста. Загрузите TXT или LRC файл.</div>`;
+                this.topSpacer = null;
+                this.bottomSpacer = null;
                 return;
             }
-            const html = this.lyrics.map((lyric, idx) => `
+
+            const realLinesHtml = this.lyrics.map((lyric, idx) => `
                 <div class="lyric-line" data-index="${idx}" data-time="${lyric.time}">
                     ${this.escapeHtml(lyric.text)}
                 </div>
             `).join('');
-            this.lyricsContainer.innerHTML = html;
+
+            this.lyricsContainer.innerHTML = `
+                <div class="lyrics-top-spacer"></div>
+                ${realLinesHtml}
+                <div class="lyrics-bottom-spacer"></div>
+            `;
+            this.topSpacer = this.lyricsContainer.querySelector('.lyrics-top-spacer');
+            this.bottomSpacer = this.lyricsContainer.querySelector('.lyrics-bottom-spacer');
+        }
+
+        updateSpacerHeight() {
+            if (!this.topSpacer || !this.bottomSpacer || !this.lyrics.length) return;
+
+            const container = this.lyricsContainer;
+            const firstRealLine = container.querySelector('.lyric-line:not(.lyrics-top-spacer):not(.lyrics-bottom-spacer)');
+            if (!firstRealLine) return;
+
+            requestAnimationFrame(() => {
+                const containerHeight = container.clientHeight;
+                const lineHeight = firstRealLine.offsetHeight;
+                // Высота пустоты над первой строкой (чуть выше центра на 5px)
+                let targetSpacerHeight = (containerHeight - lineHeight) / 2 - 50;
+                if (targetSpacerHeight < 0) targetSpacerHeight = 0;
+
+                this.topSpacer.style.height = targetSpacerHeight + 'px';
+                this.bottomSpacer.style.height = (targetSpacerHeight * 2) + 'px';
+
+                // Если скролл ушёл далеко, возвращаемся к началу для корректного центрирования
+                if (container.scrollTop > targetSpacerHeight + lineHeight) {
+                    container.scrollTop = 0;
+                }
+            });
         }
 
         scheduleDisplayUpdate() {
@@ -537,7 +557,6 @@
 
         smoothScrollToElement(element, duration = 480) {
             if (!element) return;
-            
             const container = this.lyricsContainer;
             if (!container) return;
 
@@ -549,33 +568,31 @@
             const elementOffsetTop = element.offsetTop;
             const elementHeight = element.offsetHeight;
             const containerHeight = container.clientHeight;
-            
+
             let targetScrollTop = elementOffsetTop - (containerHeight / 2) + (elementHeight / 2);
             targetScrollTop = Math.max(0, Math.min(targetScrollTop, container.scrollHeight - containerHeight));
-            
+
             const startScrollTop = container.scrollTop;
             const distance = targetScrollTop - startScrollTop;
-            
+
             if (Math.abs(distance) < 2) return;
-            
+
             const startTime = performance.now();
             const easeOutQuart = (t) => 1 - Math.pow(1 - t, 4);
-            
+
             const animateScroll = (currentTime) => {
                 const elapsed = currentTime - startTime;
                 const progress = Math.min(1, elapsed / duration);
                 const easeProgress = easeOutQuart(progress);
-                
-                const newScrollTop = startScrollTop + (distance * easeProgress);
-                container.scrollTop = newScrollTop;
-                
+                container.scrollTop = startScrollTop + (distance * easeProgress);
+
                 if (progress < 1) {
                     this.activeScrollAnimation = requestAnimationFrame(animateScroll);
                 } else {
                     this.activeScrollAnimation = null;
                 }
             };
-            
+
             this.activeScrollAnimation = requestAnimationFrame(animateScroll);
         }
 
@@ -596,42 +613,24 @@
             const prevIndex = this.currentLineIndex;
             this.currentLineIndex = activeIndex;
 
-            const lines = document.querySelectorAll('.lyric-line');
+            const lines = document.querySelectorAll('.lyric-line:not(.lyrics-top-spacer):not(.lyrics-bottom-spacer)');
             if (!lines.length) return;
 
-            // Снимаем активный класс с предыдущей строки
             if (prevIndex >= 0 && lines[prevIndex]) {
                 lines[prevIndex].classList.remove('active');
             }
 
-            // Добавляем активный класс новой строке
             if (activeIndex >= 0 && lines[activeIndex]) {
                 lines[activeIndex].classList.add('active');
-                
-                // Плавный скролл к активной строке
-                if (activeIndex > 1) {
+
+                // Прокручиваем, только если это не первая строка (первая уже в центре)
+                if (activeIndex > 0) {
                     this.smoothScrollToElement(lines[activeIndex], 520);
                 } else {
-                    if (activeIndex === 0 && this.lyricsContainer.scrollTop > 50) {
+                    const container = this.lyricsContainer;
+                    if (container.scrollTop > 50) {
                         this.smoothScrollToElement(lines[activeIndex], 400);
                     }
-                }
-            }
-            
-            // Проверка видимости для перемотки
-            if (activeIndex >= 0 && lines[activeIndex] && prevIndex !== activeIndex) {
-                const container = this.lyricsContainer;
-                const element = lines[activeIndex];
-                const containerRect = container.getBoundingClientRect();
-                const elementRect = element.getBoundingClientRect();
-                
-                const isVisible = (
-                    elementRect.top >= containerRect.top - 50 &&
-                    elementRect.bottom <= containerRect.bottom + 50
-                );
-                
-                if (!isVisible && activeIndex > 1) {
-                    this.smoothScrollToElement(element, 500);
                 }
             }
         }
@@ -641,11 +640,6 @@
                 cancelAnimationFrame(this.activeScrollAnimation);
                 this.activeScrollAnimation = null;
             }
-            if (this.scrollRaf) {
-                cancelAnimationFrame(this.scrollRaf);
-                this.scrollRaf = null;
-            }
-            
             this.audio.pause();
             if (this.currentAudioUrl) {
                 URL.revokeObjectURL(this.currentAudioUrl);
@@ -660,10 +654,11 @@
             this.trackNameDisplay.innerText = '—';
             this.lyrics = [];
             this.currentLineIndex = -1;
+            this.topSpacer = null;
+            this.bottomSpacer = null;
             this.renderEmptyState();
             this.statusDiv.style.display = 'none';
             this.statusDiv.innerHTML = '';
-            this.showStatusMessage('🔄 Все файлы сброшены', 'info', 1500);
         }
 
         renderEmptyState() {
@@ -673,16 +668,6 @@
                     (TXT конвертируется в караоке автоматически)
                 </div>
             `;
-        }
-
-        showStatusMessage(message, type = 'info', timeout = 2200) {
-            this.statusDiv.style.display = 'block';
-            this.statusDiv.className = `status ${type}`;
-            this.statusDiv.innerHTML = message;
-            if (this.statusTimeout) clearTimeout(this.statusTimeout);
-            this.statusTimeout = setTimeout(() => {
-                this.statusDiv.style.display = 'none';
-            }, timeout);
         }
 
         escapeHtml(str) {
