@@ -2,686 +2,1227 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>Караоке плеер — плавная подсветка (центр с первой и последней строки)</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#e8edf5">
+    <title>Караоке-плеер</title>
     <style>
         @font-face {
-            font-family: 'Montserrat';
-            src: url('Montserrat-VariableFont_wght.ttf') format('truetype');
+            font-family: "Montserrat";
+            src: url("Montserrat-VariableFont_wght.woff2") format("woff2"),
+                 url("Montserrat-VariableFont_wght.ttf") format("truetype");
             font-weight: 100 900;
             font-style: normal;
             font-display: swap;
         }
 
+        :root {
+            color-scheme: light;
+            --accent: #ea580c;
+            --accent-soft: #fff1e8;
+            --ink: #101827;
+            --muted: #667085;
+            --surface: rgba(255, 255, 255, 0.94);
+            --border: rgba(148, 163, 184, 0.28);
+            --shadow: 0 18px 45px -24px rgba(15, 23, 42, 0.42);
+        }
+
         * {
+            box-sizing: border-box;
             margin: 0;
             padding: 0;
-            box-sizing: border-box;
         }
 
         body {
-            font-family: 'Segoe UI', 'Arial', sans-serif;
-            background: linear-gradient(135deg, #e2e8f0 0%, #cbd5e6 100%);
             min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: flex-start;
-            padding: 30px 20px 40px;
+            padding: 22px clamp(12px, 2.5vw, 36px) 40px;
+            background:
+                radial-gradient(circle at 12% 6%, rgba(249, 115, 22, 0.12), transparent 26rem),
+                linear-gradient(145deg, #f1f5f9 0%, #dbe4f0 100%);
+            color: var(--ink);
+            font-family: "Segoe UI", Arial, sans-serif;
+        }
+
+        button,
+        input {
+            font: inherit;
+        }
+
+        button:focus-visible,
+        input:focus-visible,
+        .lyric-line:focus-visible {
+            outline: 3px solid rgba(234, 88, 12, 0.32);
+            outline-offset: 3px;
         }
 
         .karaoke-container {
-            max-width: 1100px;
-            width: 100%;
+            width: min(100%, 1360px);
             margin: 0 auto;
         }
 
+        .topbar {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            margin-bottom: 14px;
+        }
+
+        .topbar-actions {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-left: auto;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #334155;
+            font-family: "Montserrat", sans-serif;
+            font-size: clamp(0.92rem, 1.5vw, 1.05rem);
+            font-weight: 760;
+            letter-spacing: -0.02em;
+        }
+
+        .brand-mark {
+            display: grid;
+            width: 36px;
+            height: 36px;
+            place-items: center;
+            border-radius: 12px;
+            background: var(--ink);
+            color: white;
+            box-shadow: 0 8px 20px -12px rgba(15, 23, 42, 0.9);
+        }
+
+        .language-switcher {
+            display: inline-flex;
+            padding: 3px;
+            border: 1px solid var(--border);
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.78);
+            box-shadow: 0 8px 22px -18px rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(10px);
+        }
+
+        .language-button {
+            min-width: 48px;
+            border: 0;
+            border-radius: 999px;
+            padding: 7px 11px;
+            background: transparent;
+            color: #64748b;
+            font-size: 0.78rem;
+            font-weight: 750;
+            cursor: pointer;
+            transition: background-color 160ms ease, color 160ms ease, box-shadow 160ms ease;
+        }
+
+        .language-button:hover {
+            color: var(--ink);
+        }
+
+        .language-button.active {
+            background: var(--ink);
+            color: white;
+            box-shadow: 0 5px 14px -8px rgba(15, 23, 42, 0.8);
+        }
+
+        .capture-toggle {
+            display: inline-flex;
+            min-height: 38px;
+            align-items: center;
+            gap: 8px;
+            padding: 7px 12px;
+            border: 1px solid var(--border);
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.78);
+            color: #475569;
+            font-size: 0.75rem;
+            font-weight: 650;
+            cursor: pointer;
+            user-select: none;
+            backdrop-filter: blur(10px);
+        }
+
+        .capture-toggle input {
+            width: 16px;
+            height: 16px;
+            accent-color: #e11d48;
+            cursor: pointer;
+        }
+
+        .upload-panel,
+        .player-wrapper,
+        .lyrics-wrapper {
+            border: 1px solid var(--border);
+            background: var(--surface);
+            box-shadow: var(--shadow);
+            backdrop-filter: blur(12px);
+        }
+
         .upload-panel {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(4px);
-            border-radius: 24px;
-            padding: 12px 20px;
-            margin-bottom: 20px;
-            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
-            border: 1px solid rgba(255, 255, 255, 0.5);
+            margin-bottom: 14px;
+            padding: 14px clamp(14px, 2vw, 24px);
+            border-radius: 22px;
         }
 
         .upload-grid {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 15px;
-            justify-content: space-between;
-            align-items: flex-end;
+            display: grid;
+            grid-template-columns: minmax(220px, 1fr) minmax(220px, 1fr) auto;
+            align-items: end;
+            gap: 14px;
         }
 
         .upload-item {
-            flex: 1;
-            min-width: 170px;
+            min-width: 0;
         }
 
         .upload-item label {
             display: block;
-            font-weight: 600;
-            color: #1e293b;
-            margin-bottom: 5px;
+            margin-bottom: 6px;
+            color: #27364b;
             font-size: 0.8rem;
-            letter-spacing: 0.3px;
+            font-weight: 700;
+            letter-spacing: 0.01em;
         }
 
         .file-input {
-            width: 100%;
-            padding: 7px 10px;
-            background: #f8fafc;
-            border: 1.5px solid #cbd5e1;
-            border-radius: 40px;
-            font-size: 0.75rem;
-            cursor: pointer;
-            transition: all 0.2s;
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            clip-path: inset(50%);
+            white-space: nowrap;
         }
 
-        .file-input:hover {
-            border-color: #f97316;
-            background: #fff7ed;
+        .file-trigger {
+            display: flex;
+            width: 100%;
+            min-height: 39px;
+            align-items: center;
+            justify-content: center;
+            padding: 7px 12px;
+            border: 1px solid #cbd5e1;
+            border-radius: 12px;
+            background: #f8fafc;
+            color: #3f4d61;
+            font-size: 0.75rem;
+            font-weight: 650;
+            cursor: pointer;
+            transition: border-color 160ms ease, background-color 160ms ease;
+        }
+
+        .file-trigger:hover {
+            border-color: #fb923c;
+            background: #fffaf7;
+        }
+
+        .file-input:focus-visible + .file-trigger {
+            outline: 3px solid rgba(234, 88, 12, 0.32);
+            outline-offset: 3px;
         }
 
         .info-badge {
-            font-size: 0.7rem;
-            color: #475569;
-            margin-top: 4px;
             display: flex;
+            min-height: 16px;
             align-items: center;
             gap: 5px;
+            margin-top: 5px;
+            overflow: hidden;
+            color: #64748b;
+            font-size: 0.7rem;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .info-hint {
+            font-size: 0.66rem;
         }
 
         .reset-btn {
+            min-height: 39px;
+            padding: 8px 18px;
+            border: 0;
+            border-radius: 12px;
             background: #334155;
-            border: none;
-            padding: 7px 18px;
-            border-radius: 40px;
             color: white;
-            font-weight: 600;
+            font-size: 0.76rem;
+            font-weight: 700;
             cursor: pointer;
-            transition: 0.2s;
-            font-size: 0.75rem;
-            margin-top: 6px;
+            transition: background-color 160ms ease, transform 160ms ease;
         }
 
         .reset-btn:hover {
-            background: #f97316;
-            transform: scale(0.96);
+            background: var(--accent);
+        }
+
+        .reset-btn:active {
+            transform: scale(0.97);
         }
 
         .player-wrapper {
-            background: white;
-            border-radius: 28px;
-            padding: 16px 24px;
-            margin-bottom: 20px;
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+            margin-bottom: 14px;
+            padding: 15px clamp(16px, 2.5vw, 30px);
+            border-radius: 24px;
         }
 
-        audio {
-            width: 100%;
-            outline: none;
-            border-radius: 60px;
-            height: 48px;
-        }
-
-        h2 {
-            text-align: center;
-            color: #0f172a;
-            margin-bottom: 12px;
-            font-weight: 700;
-            font-size: 1.5rem;
+        .player-heading {
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 12px;
+            gap: 10px;
+            margin-bottom: 10px;
+            color: var(--ink);
+            font-family: "Montserrat", sans-serif;
+            font-size: clamp(1.22rem, 2.3vw, 1.55rem);
+            font-weight: 760;
         }
 
         .song-title {
-            font-size: 0.8rem;
+            max-width: min(52vw, 620px);
+            padding: 5px 13px;
+            overflow: hidden;
+            border-radius: 999px;
             background: #f1f5f9;
-            padding: 4px 14px;
-            border-radius: 60px;
-            color: #f97316;
-            font-weight: normal;
+            color: var(--accent);
+            font-family: "Segoe UI", Arial, sans-serif;
+            font-size: 0.78rem;
+            font-weight: 600;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        audio {
+            display: block;
+            width: 100%;
+            height: 46px;
+            border-radius: 999px;
+            outline: none;
         }
 
         .lyrics-wrapper {
-            background: white;
-            border-radius: 32px;
-            padding: 28px 20px;
-            box-shadow: 0 20px 35px -10px rgba(0, 0, 0, 0.2);
-            height: 75vh;
-            min-height: 550px;
-            max-height: 800px;
-            display: flex;
-            flex-direction: column;
             position: relative;
+            left: 50%;
+            display: flex;
+            width: 1520px;
+            min-width: 1520px;
+            height: clamp(460px, 72vh, 840px);
+            min-height: 0;
+            flex-direction: column;
+            overflow: hidden;
+            border-radius: 30px;
+            transform: translateX(-50%);
         }
 
         .lyrics-display {
             flex: 1;
+            min-height: 0;
+            padding-inline: 30px;
+            overflow-x: hidden;
             overflow-y: auto;
-            text-align: center;
+            overscroll-behavior-y: contain;
             scroll-behavior: auto;
-            scroll-padding-block: 0;
-            padding: 0 8px;
             scrollbar-width: none;
-            -ms-overflow-style: none;
+            text-align: center;
+            touch-action: pan-y;
         }
 
         .lyrics-display::-webkit-scrollbar {
             display: none;
-            width: 0;
-            background: transparent;
         }
 
-        /* Разделители для начального и конечного центрирования */
+.capture-guide {
+    position: absolute;
+    z-index: 5;
+
+    width: 1505px;
+    height: 206px;
+
+    left: 50%;
+    top: calc(50% - 2px);
+
+    border: 3px dashed #e11d48;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+}
+
+        .capture-guide[hidden] {
+            display: none;
+        }
+
         .lyrics-top-spacer,
         .lyrics-bottom-spacer {
             width: 100%;
-            transition: height 0.2s ease;
+            min-height: 0;
             pointer-events: none;
         }
 
         .lyric-line {
-            font-family: 'Montserrat', sans-serif;
+            --line-font-size: 30px;
+            --active-font-size: var(--line-font-size);
+            position: relative;
+            z-index: 0;
+            display: flex;
+            width: calc(100% - 52px);
+            height: var(--line-reserved-height, auto);
+            max-width: none;
+            margin: 0 auto;
+            align-items: center;
+            justify-content: center;
+            padding: 13px 12px;
+            border-radius: 16px;
+            color: #8a94a5;
+            font-family: "Montserrat", sans-serif;
+            font-size: var(--line-font-size);
             font-weight: 500;
-            font-size: 26px;
-            line-height: 1.5;
-            color: #8b8c9e;
-            margin: 14px auto;
+            line-height: 1;
+            opacity: 0.62;
+            cursor: pointer;
             transition:
-                font-weight 0.45s cubic-bezier(0.4, 0, 0.2, 1),
-                font-size 0.45s cubic-bezier(0.4, 0, 0.2, 1),
-                transform 0.45s cubic-bezier(0.4, 0, 0.2, 1),
-                color 0.45s cubic-bezier(0.4, 0, 0.2, 1),
-                opacity 0.45s cubic-bezier(0.4, 0, 0.2, 1);
-            transform: scale(1);
-            opacity: 0.7;
+                color 360ms cubic-bezier(0.4, 0, 0.2, 1),
+                opacity 360ms cubic-bezier(0.4, 0, 0.2, 1),
+                font-size 420ms cubic-bezier(0.4, 0, 0.2, 1),
+                font-weight 420ms cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .lyric-line.multiline {
+            padding-block: 9px;
+        }
+
+        .lyric-text {
+            max-width: 100%;
+            white-space: nowrap;
         }
 
         .lyric-line:hover {
-            background: transparent;
+            color: #566174;
+            opacity: 0.82;
         }
 
         .lyric-line.active {
+            z-index: 1;
+            color: #05070b;
+            font-size: var(--active-font-size);
             font-weight: 800;
-            font-size: 32px;
-            color: #000;
-            transform: scale(1.03);
             opacity: 1;
         }
 
-        .status {
-            margin-top: 16px;
-            padding: 10px;
-            border-radius: 24px;
-            font-size: 0.8rem;
-            text-align: center;
-            font-weight: 500;
-            transition: 0.2s;
-        }
-
-        .status.error {
-            background: #ffe4e2;
-            color: #b91c1c;
-            border-left: 6px solid #ef4444;
-        }
-
-        .status.success {
-            background: #e0f2e9;
-            color: #166534;
-            border-left: 6px solid #22c55e;
-        }
-
         .empty-state {
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
+            display: grid;
             height: 100%;
-            color: #94a3b8;
-            gap: 18px;
-            font-size: 1.1rem;
+            padding: 28px;
+            place-items: center;
+            color: #8491a5;
+            font-size: clamp(0.98rem, 2vw, 1.12rem);
+            line-height: 1.65;
             text-align: center;
-            font-family: 'Segoe UI', 'Arial', sans-serif;
         }
 
-        @media (max-width: 720px) {
-            .lyrics-wrapper {
-                height: 65vh;
-                min-height: 450px;
-                padding: 20px 16px;
+        .empty-state strong {
+            display: block;
+            margin-bottom: 4px;
+            color: #526076;
+            font-size: 1.08em;
+        }
+
+        @media (max-width: 800px) {
+            body {
+                padding-top: 14px;
             }
-            .lyric-line {
-                font-size: 20px;
-                padding: 8px 0;
-            }
-            .lyric-line.active {
-                font-size: 24px;
-            }
+
             .upload-grid {
-                flex-direction: column;
-                gap: 8px;
+                grid-template-columns: 1fr 1fr;
             }
-            .player-wrapper {
-                padding: 14px 18px;
+
+            .upload-item:last-child {
+                grid-column: 1 / -1;
             }
-            h2 {
-                font-size: 1.3rem;
+
+            .reset-btn {
+                width: 100%;
             }
+
         }
 
-        @keyframes gentleGlow {
-            0% { text-shadow: 0 0 0px rgba(255, 90, 30, 0); }
-            100% { text-shadow: 0 0 8px rgba(255, 90, 30, 0.3); }
+        @media (max-width: 560px) {
+            .topbar {
+                margin-bottom: 10px;
+            }
+
+            .topbar-actions {
+                width: 100%;
+                justify-content: space-between;
+                margin-left: 0;
+            }
+
+            .capture-toggle {
+                min-height: 34px;
+                padding: 6px 10px;
+            }
+
+            .brand-mark {
+                width: 32px;
+                height: 32px;
+                border-radius: 10px;
+            }
+
+            .language-button {
+                min-width: 43px;
+                padding: 6px 9px;
+            }
+
+            .upload-grid {
+                grid-template-columns: 1fr;
+                gap: 10px;
+            }
+
+            .upload-item:last-child {
+                grid-column: auto;
+            }
+
+            .player-heading {
+                align-items: stretch;
+                flex-direction: column;
+                gap: 7px;
+                text-align: center;
+            }
+
+            .song-title {
+                max-width: 100%;
+                align-self: center;
+            }
+
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            *,
+            *::before,
+            *::after {
+                scroll-behavior: auto !important;
+                transition-duration: 0.01ms !important;
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+            }
         }
     </style>
 </head>
 <body>
-<div class="karaoke-container">
-    <div class="upload-panel" id="uploadPanel">
+<main class="karaoke-container">
+    <header class="topbar">
+        <div class="brand">
+            <span class="brand-mark" aria-hidden="true">♪</span>
+            <span data-i18n="brand">Караоке-плеер</span>
+        </div>
+        <div class="topbar-actions">
+            <label class="capture-toggle" for="captureGuideToggle">
+                <input type="checkbox" id="captureGuideToggle" aria-controls="captureGuide" checked>
+                <span data-i18n="showCaptureGuide">Показывать область захвата</span>
+            </label>
+            <div class="language-switcher" role="group" data-i18n-aria="languageSelector">
+                <button class="language-button" type="button" data-language="ru" aria-pressed="true">RU</button>
+                <button class="language-button" type="button" data-language="en" aria-pressed="false">EN</button>
+            </div>
+        </div>
+    </header>
+
+    <section class="upload-panel" data-i18n-aria="uploadPanel">
         <div class="upload-grid">
             <div class="upload-item">
-                <label>🎵 Аудио (MP3 / M4A и др.)</label>
+                <label for="audioFileInput" data-i18n="audioLabel">🎵 Аудио (MP3, M4A и другие)</label>
                 <input type="file" id="audioFileInput" accept="audio/*" class="file-input">
-                <div class="info-badge" id="audioFileName">Файл не выбран</div>
+                <label class="file-trigger" for="audioFileInput" data-i18n="chooseAudio">Выбрать аудиофайл</label>
+                <div class="info-badge" id="audioFileName" aria-live="polite"></div>
             </div>
             <div class="upload-item">
-                <label>📄 Текст (TXT или LRC)</label>
+                <label for="lyricsFileInput" data-i18n="lyricsLabel">📄 Текст песни (TXT или LRC)</label>
                 <input type="file" id="lyricsFileInput" accept=".txt,.lrc,text/plain" class="file-input">
-                <div class="info-badge" id="lyricsFileName">Файл не выбран</div>
-                <div class="info-badge" style="font-size: 0.65rem;">✨ TXT → автоматические метки</div>
+                <label class="file-trigger" for="lyricsFileInput" data-i18n="chooseLyrics">Выбрать текст песни</label>
+                <div class="info-badge" id="lyricsFileName" aria-live="polite"></div>
+                <div class="info-badge info-hint" data-i18n="txtHint">✨ Для TXT временные метки создаются автоматически</div>
             </div>
             <div class="upload-item">
-                <button id="resetFilesBtn" class="reset-btn">🔄 Сбросить всё</button>
+                <button id="resetFilesBtn" class="reset-btn" type="button" data-i18n="reset">Сбросить всё</button>
             </div>
         </div>
-    </div>
+    </section>
 
-    <div class="player-wrapper">
-        <h2>🎤 Караоке <span id="trackNameDisplay" class="song-title">—</span></h2>
-        <audio id="audio" controls preload="auto">
-            <source src="" type="audio/mpeg">
-            Ваш браузер не поддерживает аудио
+    <section class="player-wrapper" data-i18n-aria="playerPanel">
+        <h1 class="player-heading">
+            <span data-i18n="karaoke">Караоке</span>
+            <span id="trackNameDisplay" class="song-title">—</span>
+        </h1>
+        <audio id="audio" controls preload="metadata">
+            <span data-i18n="audioUnsupported">Ваш браузер не поддерживает аудио.</span>
         </audio>
-    </div>
+    </section>
 
-    <div class="lyrics-wrapper">
-        <div class="lyrics-display" id="lyrics">
-            <div class="empty-state">
-                🎙️ Загрузите аудио и текстовый файл<br>
-                (TXT автоматически станет караоке)
-            </div>
-        </div>
-        <div class="status" id="status" style="display: none;"></div>
-    </div>
-</div>
+    <section class="lyrics-wrapper" data-i18n-aria="lyricsPanel">
+        <div class="lyrics-display" id="lyrics" aria-live="polite"></div>
+        <div class="capture-guide" id="captureGuide" aria-hidden="true"></div>
+    </section>
+</main>
 
 <script>
+    const translations = {
+        ru: {
+            pageTitle: "Караоке-плеер",
+            brand: "Караоке-плеер",
+            languageSelector: "Выбор языка",
+            showCaptureGuide: "Показывать область захвата",
+            uploadPanel: "Загрузка файлов",
+            playerPanel: "Аудиоплеер",
+            lyricsPanel: "Текст песни",
+            audioLabel: "🎵 Аудио (MP3, M4A и другие)",
+            lyricsLabel: "📄 Текст песни (TXT или LRC)",
+            chooseAudio: "Выбрать аудиофайл",
+            chooseLyrics: "Выбрать текст песни",
+            txtHint: "✨ Для TXT временные метки создаются автоматически",
+            reset: "Сбросить всё",
+            karaoke: "Караоке",
+            audioUnsupported: "Ваш браузер не поддерживает аудио.",
+            noFile: "Файл не выбран",
+            selected: "Выбран: {name}",
+            fileError: "Ошибка чтения файла",
+            audioError: "Не удалось открыть аудиофайл",
+            emptyTitle: "Загрузите аудио и текст песни",
+            emptyHint: "TXT будет синхронизирован автоматически, а LRC сохранит свои временные метки.",
+            noLyricsTitle: "В файле нет строк песни",
+            noLyricsHint: "Выберите корректный TXT- или LRC-файл.",
+            lyricsErrorTitle: "Не удалось обработать файл",
+            lyricsErrorHint: "Проверьте формат и попробуйте загрузить текст снова."
+        },
+        en: {
+            pageTitle: "Karaoke Player",
+            brand: "Karaoke Player",
+            languageSelector: "Language selector",
+            showCaptureGuide: "Show capture area",
+            uploadPanel: "File upload",
+            playerPanel: "Audio player",
+            lyricsPanel: "Song lyrics",
+            audioLabel: "🎵 Audio (MP3, M4A, and more)",
+            lyricsLabel: "📄 Lyrics (TXT or LRC)",
+            chooseAudio: "Choose audio file",
+            chooseLyrics: "Choose lyrics file",
+            txtHint: "✨ Timing is generated automatically for TXT files",
+            reset: "Reset all",
+            karaoke: "Karaoke",
+            audioUnsupported: "Your browser does not support audio.",
+            noFile: "No file selected",
+            selected: "Selected: {name}",
+            fileError: "Could not read the file",
+            audioError: "Could not open the audio file",
+            emptyTitle: "Upload audio and song lyrics",
+            emptyHint: "TXT will be timed automatically, while LRC keeps its original timestamps.",
+            noLyricsTitle: "No lyric lines found",
+            noLyricsHint: "Choose a valid TXT or LRC file.",
+            lyricsErrorTitle: "Could not process the file",
+            lyricsErrorHint: "Check the format and try uploading the lyrics again."
+        }
+    };
+
+    let currentLanguage = "ru";
+
+    function translate(key, values = {}) {
+        const template = translations[currentLanguage][key] || translations.ru[key] || key;
+        return Object.entries(values).reduce(
+            (result, [name, value]) => result.replaceAll(`{${name}}`, value),
+            template
+        );
+    }
+
+    function setLanguage(language, persist = true) {
+        currentLanguage = translations[language] ? language : "ru";
+        document.documentElement.lang = currentLanguage;
+        document.title = translate("pageTitle");
+
+        document.querySelectorAll("[data-i18n]").forEach((element) => {
+            element.textContent = translate(element.dataset.i18n);
+        });
+
+        document.querySelectorAll("[data-i18n-aria]").forEach((element) => {
+            element.setAttribute("aria-label", translate(element.dataset.i18nAria));
+        });
+
+        document.querySelectorAll("[data-language]").forEach((button) => {
+            const isActive = button.dataset.language === currentLanguage;
+            button.classList.toggle("active", isActive);
+            button.setAttribute("aria-pressed", String(isActive));
+        });
+
+        if (persist) {
+            try {
+                localStorage.setItem("karaoke-language", currentLanguage);
+            } catch (_) {
+                // Language selection still works when storage is unavailable.
+            }
+        }
+
+        window.karaokeApp?.handleLanguageChange();
+    }
+
     class SmoothKaraokePlayer {
         constructor() {
-            this.audio = document.getElementById('audio');
-            this.lyricsContainer = document.getElementById('lyrics');
-            this.statusDiv = document.getElementById('status');
-            this.audioFileInput = document.getElementById('audioFileInput');
-            this.lyricsFileInput = document.getElementById('lyricsFileInput');
-            this.resetBtn = document.getElementById('resetFilesBtn');
-            this.audioFileNameSpan = document.getElementById('audioFileName');
-            this.lyricsFileNameSpan = document.getElementById('lyricsFileName');
-            this.trackNameDisplay = document.getElementById('trackNameDisplay');
+            this.audio = document.getElementById("audio");
+            this.lyricsContainer = document.getElementById("lyrics");
+            this.audioFileInput = document.getElementById("audioFileInput");
+            this.lyricsFileInput = document.getElementById("lyricsFileInput");
+            this.resetBtn = document.getElementById("resetFilesBtn");
+            this.audioFileNameSpan = document.getElementById("audioFileName");
+            this.lyricsFileNameSpan = document.getElementById("lyricsFileName");
+            this.trackNameDisplay = document.getElementById("trackNameDisplay");
+            this.captureGuideToggle = document.getElementById("captureGuideToggle");
+            this.captureGuide = document.getElementById("captureGuide");
 
             this.lyrics = [];
             this.currentLineIndex = -1;
             this.currentAudioUrl = null;
+            this.audioFile = null;
+            this.lyricsFile = null;
+            this.audioLoadError = false;
+            this.plainTextSource = null;
+            this.currentMessageKey = "empty";
             this.updateRaf = null;
+            this.layoutRaf = null;
             this.activeScrollAnimation = null;
             this.resizeObserver = null;
             this.topSpacer = null;
             this.bottomSpacer = null;
+            this.measureCanvas = document.createElement("canvas");
 
             this.initEventListeners();
+            this.restoreCaptureGuidePreference();
+            this.updateFileLabels();
+            this.renderMessage("empty");
+
+            if (document.fonts?.ready) {
+                document.fonts.ready.then(() => this.scheduleLayoutUpdate());
+            }
         }
 
         initEventListeners() {
-            this.audioFileInput.addEventListener('change', (e) => {
-                const file = e.target.files[0];
-                if (!file) return;
-                this.loadAudioFile(file);
+            document.querySelectorAll("[data-language]").forEach((button) => {
+                button.addEventListener("click", () => setLanguage(button.dataset.language));
             });
 
-            this.lyricsFileInput.addEventListener('change', (e) => {
-                const file = e.target.files[0];
-                if (!file) return;
-                this.loadLyricsFile(file);
+            this.audioFileInput.addEventListener("change", (event) => {
+                const file = event.target.files[0];
+                if (file) this.loadAudioFile(file);
             });
 
-            this.resetBtn.addEventListener('click', () => this.resetAll());
-
-            this.audio.addEventListener('timeupdate', () => this.scheduleDisplayUpdate());
-            this.audio.addEventListener('seeked', () => this.scheduleDisplayUpdate());
-            this.audio.addEventListener('play', () => this.scheduleDisplayUpdate());
-
-            this.lyricsContainer.addEventListener('click', (e) => {
-                const lineDiv = e.target.closest('.lyric-line');
-                if (lineDiv && lineDiv.dataset.index !== undefined) {
-                    const idx = parseInt(lineDiv.dataset.index, 10);
-                    if (this.lyrics[idx] && !isNaN(this.lyrics[idx].time)) {
-                        this.audio.currentTime = this.lyrics[idx].time;
-                        this.scheduleDisplayUpdate();
-                    }
-                }
+            this.lyricsFileInput.addEventListener("change", (event) => {
+                const file = event.target.files[0];
+                if (file) this.loadLyricsFile(file);
             });
 
-            this.resizeObserver = new ResizeObserver(() => {
-                this.updateSpacerHeight();
+            this.resetBtn.addEventListener("click", () => this.resetAll());
+
+            this.captureGuideToggle.addEventListener("change", () => {
+                this.setCaptureGuideVisibility(this.captureGuideToggle.checked, true);
             });
+
+            this.audio.addEventListener("timeupdate", () => this.scheduleDisplayUpdate());
+            this.audio.addEventListener("seeked", () => this.scheduleDisplayUpdate());
+            this.audio.addEventListener("play", () => this.scheduleDisplayUpdate());
+            this.audio.addEventListener("loadedmetadata", () => this.handleAudioMetadata());
+            this.audio.addEventListener("error", () => {
+                if (!this.currentAudioUrl) return;
+                this.audioLoadError = true;
+                this.updateFileLabels();
+            });
+
+            this.lyricsContainer.addEventListener("click", (event) => {
+                const line = event.target.closest(".lyric-line");
+                if (line) this.seekToLine(line);
+            });
+
+            this.lyricsContainer.addEventListener("keydown", (event) => {
+                if (event.key !== "Enter" && event.key !== " ") return;
+                const line = event.target.closest(".lyric-line");
+                if (!line) return;
+                event.preventDefault();
+                this.seekToLine(line);
+            });
+
+            this.resizeObserver = new ResizeObserver(() => this.scheduleLayoutUpdate());
             this.resizeObserver.observe(this.lyricsContainer);
+
+            window.addEventListener("beforeunload", () => this.releaseAudioUrl());
+        }
+
+        handleLanguageChange() {
+            this.updateFileLabels();
+            if (this.currentMessageKey) this.renderMessage(this.currentMessageKey);
+        }
+
+        restoreCaptureGuidePreference() {
+            let isVisible = true;
+            try {
+                const savedValue = localStorage.getItem("karaoke-capture-guide-visible");
+                if (savedValue !== null) isVisible = savedValue === "true";
+            } catch (_) {
+                // Keep the guide visible when storage is unavailable.
+            }
+            this.setCaptureGuideVisibility(isVisible, false);
+        }
+
+        setCaptureGuideVisibility(isVisible, persist) {
+            this.captureGuideToggle.checked = isVisible;
+            this.captureGuide.hidden = !isVisible;
+
+            if (persist) {
+                try {
+                    localStorage.setItem("karaoke-capture-guide-visible", String(isVisible));
+                } catch (_) {
+                    // The toggle still works when storage is unavailable.
+                }
+            }
+        }
+
+        updateFileLabels() {
+            this.audioFileNameSpan.textContent = this.audioLoadError
+                ? `⚠ ${translate("audioError")}`
+                : this.audioFile
+                    ? `✓ ${translate("selected", { name: this.shortenFileName(this.audioFile.name) })}`
+                    : translate("noFile");
+            this.lyricsFileNameSpan.textContent = this.lyricsFile
+                ? `✓ ${translate("selected", { name: this.shortenFileName(this.lyricsFile.name) })}`
+                : translate("noFile");
+        }
+
+        shortenFileName(name, maxLength = 42) {
+            if (name.length <= maxLength) return name;
+            const extensionIndex = name.lastIndexOf(".");
+            const extension = extensionIndex > 0 ? name.slice(extensionIndex) : "";
+            const available = Math.max(12, maxLength - extension.length - 1);
+            return `${name.slice(0, available)}…${extension}`;
+        }
+
+        releaseAudioUrl() {
+            if (!this.currentAudioUrl) return;
+            URL.revokeObjectURL(this.currentAudioUrl);
+            this.currentAudioUrl = null;
         }
 
         loadAudioFile(file) {
-            if (this.currentAudioUrl) {
-                URL.revokeObjectURL(this.currentAudioUrl);
-            }
-            const url = URL.createObjectURL(file);
-            this.currentAudioUrl = url;
-            this.audio.src = url;
+            this.releaseAudioUrl();
+            this.audioFile = file;
+            this.audioLoadError = false;
+            this.currentAudioUrl = URL.createObjectURL(file);
+            this.audio.src = this.currentAudioUrl;
             this.audio.load();
+            this.trackNameDisplay.textContent = file.name.replace(/\.[^/.]+$/, "");
+            this.updateFileLabels();
+            this.scheduleDisplayUpdate();
+        }
 
-            let displayName = file.name.length > 32 ? file.name.slice(0, 28) + '...' : file.name;
-            this.audioFileNameSpan.innerHTML = `✅ ${displayName}`;
-            this.trackNameDisplay.innerText = file.name.replace(/\.[^/.]+$/, "").slice(0, 30);
-            // Уведомления убраны
+        handleAudioMetadata() {
+            if (this.plainTextSource !== null) {
+                this.convertTxtToTimedLyrics(this.plainTextSource);
+                this.renderLyrics();
+            }
             this.scheduleDisplayUpdate();
         }
 
         async loadLyricsFile(file) {
+            this.lyricsFile = file;
+            this.updateFileLabels();
+
             try {
                 const text = await file.text();
-                let nameShort = file.name.length > 32 ? file.name.slice(0, 28) + '...' : file.name;
-                this.lyricsFileNameSpan.innerHTML = `✅ ${nameShort}`;
+                const isLrc = /\[\d{1,3}:\d{2}(?:[.:]\d{1,3})?\]/.test(text)
+                    || file.name.toLowerCase().endsWith(".lrc");
 
-                const isLrcLike = /\[\d{2}:\d{2}(\.\d{2,3})?\]/.test(text) || file.name.toLowerCase().endsWith('.lrc');
-                if (isLrcLike) {
+                if (isLrc) {
+                    this.plainTextSource = null;
                     this.parseLRC(text);
                 } else {
-                    this.convertTxtToLrcStyle(text);
+                    this.plainTextSource = text;
+                    this.convertTxtToTimedLyrics(text);
                 }
 
-                if (this.lyrics.length === 0) {
-                    this.lyricsContainer.innerHTML = `<div class="empty-state">⚠️ В файле нет строк текста. Загрузите корректный TXT/LRC.</div>`;
+                if (!this.lyrics.length) {
+                    this.renderMessage("noLyrics");
                     return;
                 }
 
                 this.renderLyrics();
-                requestAnimationFrame(() => {
-                    this.updateSpacerHeight();
-                    this.scheduleDisplayUpdate();
-                });
-            } catch (err) {
-                console.error(err);
-                this.lyricsFileNameSpan.innerHTML = `❌ Ошибка`;
-                this.lyricsContainer.innerHTML = `<div class="empty-state">🚫 Не удалось обработать файл</div>`;
+            } catch (error) {
+                console.error(error);
+                this.lyrics = [];
+                this.lyricsFile = null;
+                this.lyricsFileInput.value = "";
+                this.lyricsFileNameSpan.textContent = `⚠ ${translate("fileError")}`;
+                this.renderMessage("lyricsError");
             }
         }
 
-        convertTxtToLrcStyle(rawText) {
-            const lines = rawText.split(/\r?\n/);
-            const textLines = lines
-                .map(l => l.trim())
-                .filter(l => l.length > 0 && !l.startsWith('[') && !l.startsWith('#') && !l.startsWith(';'));
+        getPlainTextLines(rawText) {
+            return rawText
+                .split(/\r?\n/)
+                .map((line) => line.trim())
+                .filter((line) => line.length > 0
+                    && !line.startsWith("[")
+                    && !line.startsWith("#")
+                    && !line.startsWith(";"));
+        }
 
-            if (textLines.length === 0) {
+        convertTxtToTimedLyrics(rawText) {
+            const textLines = this.getPlainTextLines(rawText);
+            if (!textLines.length) {
                 this.lyrics = [];
                 return;
             }
 
-            let duration = this.audio.duration && isFinite(this.audio.duration) && this.audio.duration > 0
-                ? this.audio.duration : null;
-            const newLyrics = [];
+            const duration = Number.isFinite(this.audio.duration) && this.audio.duration > 0
+                ? this.audio.duration
+                : null;
 
-            if (duration && duration > 0 && textLines.length > 0) {
+            if (duration) {
                 const step = duration / textLines.length;
-                for (let i = 0; i < textLines.length; i++) {
-                    let time = i * step;
-                    if (time > duration - 0.4 && textLines.length > 1) time = Math.max(0, duration - 0.6);
-                    newLyrics.push({ time: Math.min(time, duration - 0.2), text: textLines[i] });
-                }
+                this.lyrics = textLines.map((text, index) => ({
+                    time: Math.min(index * step, Math.max(0, duration - 0.15)),
+                    text
+                }));
             } else {
-                let accumTime = 0;
-                for (let i = 0; i < textLines.length; i++) {
-                    newLyrics.push({ time: accumTime, text: textLines[i] });
-                    accumTime += 4.0;
-                }
+                this.lyrics = textLines.map((text, index) => ({ time: index * 4, text }));
             }
-            this.lyrics = newLyrics.sort((a, b) => a.time - b.time);
         }
 
         parseLRC(lrcText) {
-            const lines = lrcText.split('\n');
-            const timeRegex = /\[(\d{2}):(\d{2})(?:\.(\d{2,3}))?\]/;
+            const offsetMatch = lrcText.match(/^\[offset:([+-]?\d+)\]/im);
+            const offsetSeconds = offsetMatch ? Number(offsetMatch[1]) / 1000 : 0;
+            const timestampPattern = /\[(\d{1,3}):(\d{2})(?:[.:](\d{1,3}))?\]/g;
             const parsed = [];
 
-            for (let line of lines) {
-                const match = line.match(timeRegex);
-                if (match) {
-                    const minutes = parseInt(match[1], 10);
-                    const seconds = parseInt(match[2], 10);
-                    let centi = match[3] ? parseInt(match[3], 10) : 0;
-                    let timeSeconds = minutes * 60 + seconds;
-                    if (match[3]) {
-                        if (match[3].length === 2) timeSeconds += centi / 100;
-                        else if (match[3].length === 3) timeSeconds += centi / 1000;
-                    }
-                    const text = line.replace(timeRegex, '').trim();
-                    if (text) parsed.push({ time: timeSeconds, text });
-                }
-            }
+            for (const line of lrcText.split(/\r?\n/)) {
+                const timestamps = [...line.matchAll(timestampPattern)];
+                if (!timestamps.length) continue;
 
-            if (parsed.length === 0) {
-                const fallbackRegex = /\[(\d+):(\d+(?:\.\d+)?)\]/;
-                for (let line of lines) {
-                    const m = line.match(fallbackRegex);
-                    if (m) {
-                        let mins = parseInt(m[1], 10);
-                        let secs = parseFloat(m[2]);
-                        let time = mins * 60 + secs;
-                        let text = line.replace(fallbackRegex, '').trim();
-                        if (text) parsed.push({ time, text });
-                    }
+                const text = line.replace(timestampPattern, "").trim();
+                if (!text) continue;
+
+                for (const match of timestamps) {
+                    const minutes = Number(match[1]);
+                    const seconds = Number(match[2]);
+                    const fraction = match[3] ? Number(`0.${match[3]}`) : 0;
+                    const time = Math.max(0, minutes * 60 + seconds + fraction + offsetSeconds);
+                    parsed.push({ time, text });
                 }
             }
 
             this.lyrics = parsed.sort((a, b) => a.time - b.time);
-            if (this.lyrics.length === 0 && lines.length) {
-                const plainLines = lines.filter(l => l.trim() && !l.startsWith('[') && !l.startsWith('#'));
-                if (plainLines.length) this.convertTxtToLrcStyle(plainLines.join('\n'));
+
+            if (!this.lyrics.length) {
+                const plainLines = this.getPlainTextLines(lrcText);
+                if (plainLines.length) {
+                    this.plainTextSource = plainLines.join("\n");
+                    this.convertTxtToTimedLyrics(this.plainTextSource);
+                }
             }
         }
 
         renderLyrics() {
             if (!this.lyrics.length) {
-                this.lyricsContainer.innerHTML = `<div class="empty-state">📭 Нет текста. Загрузите TXT или LRC файл.</div>`;
-                this.topSpacer = null;
-                this.bottomSpacer = null;
+                this.renderMessage("noLyrics");
                 return;
             }
 
-            const realLinesHtml = this.lyrics.map((lyric, idx) => `
-                <div class="lyric-line" data-index="${idx}" data-time="${lyric.time}">
-                    ${this.escapeHtml(lyric.text)}
-                </div>
-            `).join('');
-
+            this.cancelScrollAnimation();
+            this.currentMessageKey = null;
+            this.currentLineIndex = -1;
             this.lyricsContainer.innerHTML = `
-                <div class="lyrics-top-spacer"></div>
-                ${realLinesHtml}
-                <div class="lyrics-bottom-spacer"></div>
+                <div class="lyrics-top-spacer" aria-hidden="true"></div>
+                ${this.lyrics.map((lyric, index) => `
+                    <div class="lyric-line" data-index="${index}" role="button" tabindex="0">
+                        <span class="lyric-text">${this.escapeHtml(lyric.text)}</span>
+                    </div>
+                `).join("")}
+                <div class="lyrics-bottom-spacer" aria-hidden="true"></div>
             `;
-            this.topSpacer = this.lyricsContainer.querySelector('.lyrics-top-spacer');
-            this.bottomSpacer = this.lyricsContainer.querySelector('.lyrics-bottom-spacer');
+
+            this.topSpacer = this.lyricsContainer.querySelector(".lyrics-top-spacer");
+            this.bottomSpacer = this.lyricsContainer.querySelector(".lyrics-bottom-spacer");
+            this.lyricsContainer.scrollTop = 0;
+            this.scheduleLayoutUpdate();
+            this.scheduleDisplayUpdate();
         }
 
-        updateSpacerHeight() {
-            if (!this.topSpacer || !this.bottomSpacer || !this.lyrics.length) return;
+        renderMessage(type) {
+            const keys = {
+                empty: ["emptyTitle", "emptyHint"],
+                noLyrics: ["noLyricsTitle", "noLyricsHint"],
+                lyricsError: ["lyricsErrorTitle", "lyricsErrorHint"]
+            };
+            const [titleKey, hintKey] = keys[type] || keys.empty;
+            this.currentMessageKey = type;
+            this.topSpacer = null;
+            this.bottomSpacer = null;
+            this.lyricsContainer.innerHTML = `
+                <div class="empty-state">
+                    <div><strong>${this.escapeHtml(translate(titleKey))}</strong>${this.escapeHtml(translate(hintKey))}</div>
+                </div>
+            `;
+        }
 
-            const container = this.lyricsContainer;
-            const firstRealLine = container.querySelector('.lyric-line:not(.lyrics-top-spacer):not(.lyrics-bottom-spacer)');
-            if (!firstRealLine) return;
+        scheduleLayoutUpdate() {
+            if (this.layoutRaf) cancelAnimationFrame(this.layoutRaf);
+            this.layoutRaf = requestAnimationFrame(() => {
+                this.layoutRaf = null;
+                this.layoutLyricLines();
+                this.updateSpacerHeights();
 
-            requestAnimationFrame(() => {
-                const containerHeight = container.clientHeight;
-                const lineHeight = firstRealLine.offsetHeight;
-                // Высота пустоты над первой строкой (чуть выше центра на 5px)
-                let targetSpacerHeight = (containerHeight - lineHeight) / 2 - 50;
-                if (targetSpacerHeight < 0) targetSpacerHeight = 0;
-
-                this.topSpacer.style.height = targetSpacerHeight + 'px';
-                this.bottomSpacer.style.height = (targetSpacerHeight * 2) + 'px';
-
-                // Если скролл ушёл далеко, возвращаемся к началу для корректного центрирования
-                if (container.scrollTop > targetSpacerHeight + lineHeight) {
-                    container.scrollTop = 0;
+                if (this.currentLineIndex >= 0) {
+                    const activeLine = this.getLineElements()[this.currentLineIndex];
+                    if (activeLine) this.smoothScrollToElement(activeLine, 0);
                 }
             });
+        }
+
+        layoutLyricLines() {
+            const lines = this.getLineElements();
+            if (!lines.length) return;
+
+            const activeLines = Array.from(lines).filter((line) => line.classList.contains("active"));
+            activeLines.forEach((line) => line.classList.remove("active"));
+            lines.forEach((line) => {
+                line.style.removeProperty("--line-font-size");
+                line.style.removeProperty("--active-font-size");
+                line.style.removeProperty("--line-reserved-height");
+            });
+            const baseFontSize = parseFloat(getComputedStyle(lines[0]).fontSize);
+            const context = this.measureCanvas.getContext("2d");
+            if (!context || !baseFontSize) return;
+
+            for (const line of lines) {
+                const index = Number(line.dataset.index);
+                const text = this.lyrics[index]?.text || "";
+                const textElement = line.querySelector(".lyric-text");
+                if (!textElement) continue;
+
+                const availableWidth = Math.max(1, line.clientWidth - 24);
+                const desiredActiveSize = baseFontSize * 1.08;
+                context.font = `800 ${desiredActiveSize}px Montserrat, sans-serif`;
+                const stableLines = this.wrapTextForWidth(text, context, availableWidth);
+
+                line.classList.toggle("multiline", stableLines.length > 1);
+                const styles = getComputedStyle(line);
+                const lineHeightRatio = parseFloat(styles.lineHeight) / parseFloat(styles.fontSize) || 1.22;
+                const verticalPadding = parseFloat(styles.paddingTop) + parseFloat(styles.paddingBottom);
+                const reservedHeight = Math.ceil(
+                    desiredActiveSize * lineHeightRatio * stableLines.length + verticalPadding
+                );
+
+                textElement.innerHTML = stableLines.map((part) => this.escapeHtml(part)).join("<br>");
+                line.style.setProperty("--line-font-size", `${baseFontSize}px`);
+                line.style.setProperty("--active-font-size", `${desiredActiveSize}px`);
+                line.style.setProperty("--line-reserved-height", `${reservedHeight}px`);
+            }
+            activeLines.forEach((line) => line.classList.add("active"));
+        }
+
+        wrapTextForWidth(text, context, maxWidth) {
+            const words = text.trim().split(/\s+/).filter(Boolean);
+            const wrappedLines = [];
+            let currentLine = "";
+
+            for (const word of words) {
+                const candidate = currentLine ? `${currentLine} ${word}` : word;
+                if (context.measureText(candidate).width <= maxWidth) {
+                    currentLine = candidate;
+                    continue;
+                }
+
+                if (currentLine) {
+                    wrappedLines.push(currentLine);
+                    currentLine = "";
+                }
+
+                if (context.measureText(word).width <= maxWidth) {
+                    currentLine = word;
+                    continue;
+                }
+
+                let chunk = "";
+                for (const character of Array.from(word)) {
+                    if (chunk && context.measureText(chunk + character).width > maxWidth) {
+                        wrappedLines.push(chunk);
+                        chunk = character;
+                    } else {
+                        chunk += character;
+                    }
+                }
+                currentLine = chunk;
+            }
+
+            if (currentLine) wrappedLines.push(currentLine);
+            return wrappedLines.length ? wrappedLines : [text];
+        }
+
+        updateSpacerHeights() {
+            const lines = this.getLineElements();
+            if (!this.topSpacer || !this.bottomSpacer || !lines.length) return;
+
+            const containerHeight = this.lyricsContainer.clientHeight;
+            const topHeight = Math.max(0, (containerHeight - lines[0].offsetHeight) / 2);
+            const bottomHeight = Math.max(0, (containerHeight - lines[lines.length - 1].offsetHeight) / 2);
+            this.topSpacer.style.height = `${topHeight}px`;
+            this.bottomSpacer.style.height = `${bottomHeight}px`;
+        }
+
+        getLineElements() {
+            return this.lyricsContainer.querySelectorAll(".lyric-line");
+        }
+
+        seekToLine(line) {
+            if (!this.audioFile) return;
+            const index = Number(line.dataset.index);
+            if (!Number.isInteger(index) || !this.lyrics[index]) return;
+            this.audio.currentTime = this.lyrics[index].time;
+            this.scheduleDisplayUpdate();
         }
 
         scheduleDisplayUpdate() {
             if (this.updateRaf) return;
             this.updateRaf = requestAnimationFrame(() => {
                 this.updateRaf = null;
-                this.smoothUpdateDisplay();
+                this.updateDisplay();
             });
+        }
+
+        findActiveLineIndex(currentTime) {
+            let low = 0;
+            let high = this.lyrics.length - 1;
+            let result = -1;
+
+            while (low <= high) {
+                const middle = Math.floor((low + high) / 2);
+                if (this.lyrics[middle].time <= currentTime) {
+                    result = middle;
+                    low = middle + 1;
+                } else {
+                    high = middle - 1;
+                }
+            }
+            return result;
+        }
+
+        updateDisplay() {
+            if (!this.lyrics.length) return;
+            const activeIndex = this.findActiveLineIndex(this.audio.currentTime);
+            if (activeIndex === this.currentLineIndex) return;
+
+            const lines = this.getLineElements();
+            const previousLine = lines[this.currentLineIndex];
+            const activeLine = lines[activeIndex];
+            previousLine?.classList.remove("active");
+            activeLine?.classList.add("active");
+            this.currentLineIndex = activeIndex;
+
+            if (activeLine) {
+                requestAnimationFrame(() => this.smoothScrollToElement(activeLine, 500));
+            } else {
+                this.cancelScrollAnimation();
+                this.lyricsContainer.scrollTop = 0;
+            }
+        }
+
+        cancelScrollAnimation() {
+            if (!this.activeScrollAnimation) return;
+            cancelAnimationFrame(this.activeScrollAnimation);
+            this.activeScrollAnimation = null;
         }
 
         smoothScrollToElement(element, duration = 480) {
             if (!element) return;
             const container = this.lyricsContainer;
-            if (!container) return;
+            this.cancelScrollAnimation();
 
-            if (this.activeScrollAnimation) {
-                cancelAnimationFrame(this.activeScrollAnimation);
-                this.activeScrollAnimation = null;
+            const target = Math.max(0, Math.min(
+                element.offsetTop - container.clientHeight / 2 + element.offsetHeight / 2,
+                container.scrollHeight - container.clientHeight
+            ));
+
+            const start = container.scrollTop;
+            const distance = target - start;
+            const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+            if (duration <= 0 || reduceMotion || Math.abs(distance) < 1) {
+                container.scrollTop = target;
+                return;
             }
 
-            const elementOffsetTop = element.offsetTop;
-            const elementHeight = element.offsetHeight;
-            const containerHeight = container.clientHeight;
-
-            let targetScrollTop = elementOffsetTop - (containerHeight / 2) + (elementHeight / 2);
-            targetScrollTop = Math.max(0, Math.min(targetScrollTop, container.scrollHeight - containerHeight));
-
-            const startScrollTop = container.scrollTop;
-            const distance = targetScrollTop - startScrollTop;
-
-            if (Math.abs(distance) < 2) return;
-
             const startTime = performance.now();
-            const easeOutQuart = (t) => 1 - Math.pow(1 - t, 4);
+            const easeInOutCubic = (value) => value < 0.5
+                ? 4 * value * value * value
+                : 1 - Math.pow(-2 * value + 2, 3) / 2;
 
-            const animateScroll = (currentTime) => {
-                const elapsed = currentTime - startTime;
-                const progress = Math.min(1, elapsed / duration);
-                const easeProgress = easeOutQuart(progress);
-                container.scrollTop = startScrollTop + (distance * easeProgress);
+            const animate = (time) => {
+                const progress = Math.min(1, (time - startTime) / duration);
+                container.scrollTop = start + distance * easeInOutCubic(progress);
 
                 if (progress < 1) {
-                    this.activeScrollAnimation = requestAnimationFrame(animateScroll);
+                    this.activeScrollAnimation = requestAnimationFrame(animate);
                 } else {
                     this.activeScrollAnimation = null;
                 }
             };
 
-            this.activeScrollAnimation = requestAnimationFrame(animateScroll);
-        }
-
-        smoothUpdateDisplay() {
-            if (!this.lyrics.length) return;
-            const currentTime = this.audio.currentTime;
-            let activeIndex = -1;
-
-            for (let i = this.lyrics.length - 1; i >= 0; i--) {
-                if (currentTime >= this.lyrics[i].time) {
-                    activeIndex = i;
-                    break;
-                }
-            }
-
-            if (activeIndex === this.currentLineIndex) return;
-
-            const prevIndex = this.currentLineIndex;
-            this.currentLineIndex = activeIndex;
-
-            const lines = document.querySelectorAll('.lyric-line:not(.lyrics-top-spacer):not(.lyrics-bottom-spacer)');
-            if (!lines.length) return;
-
-            if (prevIndex >= 0 && lines[prevIndex]) {
-                lines[prevIndex].classList.remove('active');
-            }
-
-            if (activeIndex >= 0 && lines[activeIndex]) {
-                lines[activeIndex].classList.add('active');
-
-                // Прокручиваем, только если это не первая строка (первая уже в центре)
-                if (activeIndex > 0) {
-                    this.smoothScrollToElement(lines[activeIndex], 520);
-                } else {
-                    const container = this.lyricsContainer;
-                    if (container.scrollTop > 50) {
-                        this.smoothScrollToElement(lines[activeIndex], 400);
-                    }
-                }
-            }
+            this.activeScrollAnimation = requestAnimationFrame(animate);
         }
 
         resetAll() {
-            if (this.activeScrollAnimation) {
-                cancelAnimationFrame(this.activeScrollAnimation);
-                this.activeScrollAnimation = null;
-            }
+            this.cancelScrollAnimation();
+            if (this.layoutRaf) cancelAnimationFrame(this.layoutRaf);
+            if (this.updateRaf) cancelAnimationFrame(this.updateRaf);
+
             this.audio.pause();
-            if (this.currentAudioUrl) {
-                URL.revokeObjectURL(this.currentAudioUrl);
-                this.currentAudioUrl = null;
-            }
-            this.audio.src = '';
+            this.releaseAudioUrl();
+            this.audio.removeAttribute("src");
             this.audio.load();
-            this.audioFileInput.value = '';
-            this.lyricsFileInput.value = '';
-            this.audioFileNameSpan.innerHTML = 'Файл не выбран';
-            this.lyricsFileNameSpan.innerHTML = 'Файл не выбран';
-            this.trackNameDisplay.innerText = '—';
+            this.audioFileInput.value = "";
+            this.lyricsFileInput.value = "";
+            this.trackNameDisplay.textContent = "—";
+            this.audioFile = null;
+            this.lyricsFile = null;
+            this.audioLoadError = false;
+            this.plainTextSource = null;
             this.lyrics = [];
             this.currentLineIndex = -1;
-            this.topSpacer = null;
-            this.bottomSpacer = null;
-            this.renderEmptyState();
-            this.statusDiv.style.display = 'none';
-            this.statusDiv.innerHTML = '';
+            this.updateRaf = null;
+            this.layoutRaf = null;
+            this.updateFileLabels();
+            this.renderMessage("empty");
         }
 
-        renderEmptyState() {
-            this.lyricsContainer.innerHTML = `
-                <div class="empty-state">
-                    🎤 Загрузите аудио и текстовый файл<br>
-                    (TXT конвертируется в караоке автоматически)
-                </div>
-            `;
-        }
-
-        escapeHtml(str) {
-            if (!str) return '';
-            return str.replace(/[&<>]/g, function(m) {
-                if (m === '&') return '&amp;';
-                if (m === '<') return '&lt;';
-                if (m === '>') return '&gt;';
-                return m;
-            });
+        escapeHtml(value) {
+            return String(value).replace(/[&<>"']/g, (character) => ({
+                "&": "&amp;",
+                "<": "&lt;",
+                ">": "&gt;",
+                "\"": "&quot;",
+                "'": "&#039;"
+            })[character]);
         }
     }
 
-    window.addEventListener('DOMContentLoaded', () => {
+    window.addEventListener("DOMContentLoaded", () => {
+        let savedLanguage = null;
+        try {
+            savedLanguage = localStorage.getItem("karaoke-language");
+        } catch (_) {
+            // Fall back to the browser language.
+        }
+
+        const initialLanguage = translations[savedLanguage]
+            ? savedLanguage
+            : (navigator.language || "").toLowerCase().startsWith("ru") ? "ru" : "en";
+
+        setLanguage(initialLanguage, false);
         window.karaokeApp = new SmoothKaraokePlayer();
     });
 </script>
